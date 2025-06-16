@@ -64,14 +64,18 @@ def parse_phone_bands(text):
     nr_bands = set() # 5G New Radio bands
 
     # --- 5G Band Extraction ---
-    # Look for 'n' followed by digits anywhere in the text.
-    # This handles "n28A" as "n28" which is the standard interpretation (n-bands are numeric).
-    nr_matches = re.findall(r'n(\d+)(?:[a-zA-Z])?', text, re.IGNORECASE)
-    for band_str in nr_matches:
-        try:
-            nr_bands.add(int(band_str))
-        except ValueError:
-            pass
+    # Look for 'n' followed by digits, separated by slashes or commas, or just spaces.
+    # This regex now correctly captures all numbers after 'n' until a non-digit/slash/comma/space character.
+    # It finds sequences like n1/2/3, n77, n260, etc.
+    nr_matches = re.findall(r'n(\d+(?:[/\s,]\d+)*)', text, re.IGNORECASE)
+    for match_group in nr_matches:
+        # Split the captured group by non-digit characters to get individual band numbers
+        individual_bands = re.findall(r'\d+', match_group)
+        for band_str in individual_bands:
+            try:
+                nr_bands.add(int(band_str))
+            except ValueError:
+                pass
 
     # --- 4G/LTE Band Extraction ---
     lines = text.split('\n')
